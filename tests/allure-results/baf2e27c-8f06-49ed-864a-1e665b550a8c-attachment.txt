@@ -1,0 +1,3 @@
+2024-06-24 01:00:50,904 - TablePage - INFO - Loading the page
+2024-06-24 01:00:50,991 - TablePage - INFO - Searching for name: S. Frost
+2024-06-24 01:00:51,031 - TablePage - INFO - Checking if search results contain text: S. Frost

@@ -1,0 +1,2 @@
+2024-06-24 01:00:50,422 - TablePage - INFO - Loading the page
+2024-06-24 01:00:50,540 - TablePage - INFO - Sorting by column: Age with order: sorting_desc

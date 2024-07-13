@@ -1,0 +1,3 @@
+[32mINFO    [0m TablePage:table_page.py:24 Loading the page
+[32mINFO    [0m TablePage:table_page.py:38 Searching for name: H. Martin
+[32mINFO    [0m TablePage:table_page.py:43 Checking if search results contain text: H. Martin

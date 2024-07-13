@@ -1,0 +1,2 @@
+[32mINFO    [0m TablePage:table_page.py:24 Loading the page
+[32mINFO    [0m TablePage:table_page.py:28 Sorting by column: Name with order: sorting_desc

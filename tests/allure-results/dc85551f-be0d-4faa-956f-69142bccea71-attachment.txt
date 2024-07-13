@@ -1,0 +1,4 @@
+2024-06-24 01:00:46,854 - DownloadPage - INFO - Loading the download page
+2024-06-24 01:00:49,555 - DownloadPage - INFO - Clicking on the 'CSV' button to download the table data as CSV
+2024-06-24 01:00:49,655 - DownloadPage - INFO - CSV downloaded to /Users/ankittripathi/PycharmProjects/playwright-ch/tests/downloads/Selenium Grid Online  Run Selenium Test On Cloud.csv
+2024-06-24 01:00:49,655 - DownloadPage - INFO - Verifying if the CSV file is downloaded to /Users/ankittripathi/PycharmProjects/playwright-ch/tests/downloads/Selenium Grid Online  Run Selenium Test On Cloud.csv
