@@ -8,9 +8,16 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright browsers
 RUN playwright install
 
-# Define the default command to run pytest
+# Make port 80 available to the world outside this container
+EXPOSE 80
+
+# Set the PYTHONPATH environment variable
+ENV PYTHONPATH=/app
+
+# Run pytest with the TEST_COMMAND environment variable
 CMD ["sh", "-c", "$TEST_COMMAND"]
