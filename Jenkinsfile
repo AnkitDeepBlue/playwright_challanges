@@ -1,25 +1,24 @@
 pipeline {
     agent any
     environment {
-        DOCKER_USERNAME = credentials('docker-username-id')
-        DOCKER_PASSWORD = credentials('docker-password-id')
+        DOCKER_CREDENTIALS_ID = 'docker-credentials'
     }
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/AnkitDeepBlue/playwright_challanges.git'
-            }
-        }
-        stage('Docker Login') {
-            steps {
-                sh '''
-                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                '''
+                checkout scm
             }
         }
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t playwright-test .'
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    script {
+                        sh '''
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker build -t playwright-test .
+                        '''
+                    }
+                }
             }
         }
         stage('Run Tests') {
