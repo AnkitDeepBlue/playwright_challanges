@@ -6,6 +6,11 @@ pipeline {
     }
 
     stages {
+        stage('Verify Docker') {
+            steps {
+                sh 'docker --version'
+            }
+        }
         stage('Checkout') {
             steps {
                 checkout scm
@@ -28,7 +33,9 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout'
+            script {
+                sh 'docker logout'
+            }
             echo 'Cleaning up...'
         }
     }
