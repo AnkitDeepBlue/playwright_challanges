@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_USERNAME = credentials('docker-username-id')
-        DOCKER_PASSWORD = credentials('docker-password-id')
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -14,9 +9,11 @@ pipeline {
         }
         stage('Docker Login') {
             steps {
-                sh '''
-                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                '''
+                withCredentials([usernamePassword(credentialsId: '1ee9e560-ad49-4643-906d-08036cf7f982', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                    '''
+                }
             }
         }
         stage('Build Docker Image') {
