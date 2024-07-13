@@ -1,42 +1,32 @@
 pipeline {
-    agent {
-        dockerfile {
-            filename 'Dockerfile'
-            args '-v /dev/shm:/dev/shm' // Required for running Playwright tests
-        }
-    }
+    agent any
+
     environment {
-        TEST_COMMAND = 'pytest tests/test_table.py --alluredir=allure-results'
+        DOCKER_USERNAME = credentials('docker-username-id')
+        DOCKER_PASSWORD = credentials('docker-password-id')
     }
-    parameters {
-        string(name: 'TEST_COMMAND', defaultValue: 'pytest tests/test_table.py --alluredir=allure-results', description: 'Command to run tests')
-    }
+
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                script {
-                    // Ensure workspace is clean
-                    sh 'rm -rf allure-results allure-report'
-
-                    // Build Docker image
-                    sh 'docker build -t playwright-test .'
-
-                    // Run tests in Docker container with dynamic command
-                    sh "docker run --rm -v \$WORKSPACE/allure-results:/app/allure-results playwright-test ${params.TEST_COMMAND}"
-                }
+                checkout scm
             }
         }
-        stage('Allure Report') {
+        stage('Docker Login') {
             steps {
-                script {
-                    allure([
-                        includeProperties: false,
-                        jdk: '',
-                        properties: [],
-                        reportBuildPolicy: 'ALWAYS',
-                        results: [[path: 'allure-results']]
-                    ])
-                }
+                sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                '''
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t playwright-test .'
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                sh 'docker run --rm -v $(pwd)/allure-results:/app/allure-results -e TEST_COMMAND="pytest tests/test_table.py --alluredir=allure-results" playwright-test'
             }
         }
     }
