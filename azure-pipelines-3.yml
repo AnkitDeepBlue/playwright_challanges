@@ -5,7 +5,7 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: $(SUDO_PASSWORD)
+  SUDO_PASSWORD: Baba12224454
 
 steps:
 - task: UseNode@1
