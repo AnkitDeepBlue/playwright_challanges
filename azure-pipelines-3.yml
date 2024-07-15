@@ -10,21 +10,23 @@ variables:
 steps:
 - checkout: self
 
-# Install Docker if not already present
+# Install Docker
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
     echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
     echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
-  displayName: 'Install Docker'
+  displayName: 'Install and Start Docker'
 
 # Build Docker Image
 - script: |
-    docker build -t my-python-image .
+    echo "${SUDO_PASSWORD}" | sudo -S docker build -t my-python-image .
   displayName: 'Build Docker Image'
 
 # Run Tests in Docker Container
 - script: |
-    docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
+    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
     cd /src &&
     python3 -m venv venv &&
     source venv/bin/activate &&
