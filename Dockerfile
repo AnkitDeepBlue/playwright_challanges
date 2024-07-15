@@ -26,7 +26,13 @@ RUN apt-get update && apt-get install -y \
     libcairo-gobject2 \
     libgdk-pixbuf2.0-0 \
     nodejs \
-    npm
+    npm \
+    curl && \
+    apt-get clean
+
+# Install Playwright and dependencies
+RUN npm install -g npm@latest && \
+    npx playwright install
 
 # Copy the current directory contents into the container at /app
 COPY . /app
@@ -38,8 +44,6 @@ RUN python3 -m venv venv
 RUN . venv/bin/activate && \
     pip install --upgrade pip && \
     pip install -r requirements.txt && \
-    npm install && \
-    npx playwright install && \
     pip install pytest allure-pytest junit-xml
 
 # Set PYTHONPATH to include the project root

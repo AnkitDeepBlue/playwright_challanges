@@ -8,20 +8,18 @@ variables:
   SUDO_PASSWORD: Baba12224454
 
 steps:
-- task: UseNode@1
-  inputs:
-    version: '14.x'
-  displayName: 'Use Node.js'
-
 - checkout: self
 
-# Build Docker Image
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
     echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
     echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
     echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
     echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
+  displayName: 'Install Docker'
+
+# Build Docker Image
+- script: |
     docker build -t my-python-image .
   displayName: 'Build Docker Image'
 
