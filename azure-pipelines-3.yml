@@ -5,7 +5,7 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: Baba12224454  # Ensure this is set correctly or use Azure DevOps secure files
+  SUDO_PASSWORD: Baba12224454  # Use Azure DevOps secret variables for security
 
 steps:
 - task: UseNode@1
@@ -35,11 +35,7 @@ steps:
         libpangocairo-1.0-0 \
         libcairo-gobject2 \
         libgdk-pixbuf2.0-0 \
-        python3-venv \
-        openjdk-11-jdk
-
-    # Set JAVA_HOME
-    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+        python3-venv
 
     # Navigate to the project directory
     cd $(Build.SourcesDirectory)
@@ -54,7 +50,7 @@ steps:
     # Install Python dependencies from requirements.txt if it exists
     if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
 
-    # Ensure pytest and Allure are installed
+    # Ensure pytest and allure are installed
     pip install pytest allure-pytest
 
     # Install Node.js dependencies
@@ -67,42 +63,20 @@ steps:
     export PYTHONPATH=$(Build.SourcesDirectory)
 
     # Run the tests with pytest and generate Allure reports
-    pytest tests/test_table.py --junitxml=pytest-results.xml --alluredir=allure-results
+    pytest tests/test_table.py --alluredir=allure-results
+
+    # Generate Allure report
+    allure generate allure-results -o allure-report
+
+    # Zip the Allure report
+    zip -r allure-report.zip allure-report
   env:
     SUDO_PASSWORD: $(SUDO_PASSWORD)
-  displayName: 'Set Up Environment and Run Tests'
-
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: '**/pytest-results.xml'
-    testResultsFormat: 'JUnit'
-    mergeTestResults: true
-    failTaskOnFailedTests: true
-  displayName: 'Publish JUnit Test Results'
-
-- task: CmdLine@2
-  inputs:
-    script: 'npm install -g allure-commandline'
-  displayName: 'Install Allure Commandline'
-
-- task: CmdLine@2
-  inputs:
-    script: 'allure generate $(Build.SourcesDirectory)/allure-results -o $(Build.SourcesDirectory)/allure-report'
-  displayName: 'Generate Allure Report'
+  displayName: 'Set Up Environment, Run Tests, and Generate Allure Report'
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Build.SourcesDirectory)/allure-report'
+    targetPath: '$(Build.SourcesDirectory)/allure-report.zip'
     artifactName: 'AllureReport'
     publishLocation: 'pipeline'
-  displayName: 'Publish Allure Report Artifact'
-
-- task: CmdLine@2
-  inputs:
-    script: 'allure open -p 8080 $(Build.SourcesDirectory)/allure-report'
-  displayName: 'Host Allure Report'
-
-- task: CmdLine@2
-  inputs:
-    script: 'curl http://localhost:8080'
-  displayName: 'Check Allure Report Availability'
+  displayName: 'Publish Allure Report'
