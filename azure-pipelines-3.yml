@@ -50,8 +50,8 @@ steps:
     # Install Python dependencies from requirements.txt if it exists
     if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
 
-    # Ensure pytest is installed
-    pip install pytest
+    # Ensure pytest and other dependencies are installed
+    pip install pytest allure-pytest junit-xml
 
     # Install Node.js dependencies
     if [ -f package.json ]; then npm install; fi
@@ -62,8 +62,26 @@ steps:
     # Set PYTHONPATH to include the project root
     export PYTHONPATH=$(Build.SourcesDirectory)
 
-    # Run the tests with pytest and generate Allure reports
-    pytest tests/test_table.py --alluredir=allure-results
-  env:
-    SUDO_PASSWORD: $(SUDO_PASSWORD)
+    # Run the tests with pytest and generate Allure and JUnit reports
+    pytest tests/test_table.py --alluredir=$(Build.ArtifactStagingDirectory)/allure-results --junitxml=$(Build.ArtifactStagingDirectory)/junit-results.xml
+
+    # Generate Allure report
+    allure generate $(Build.ArtifactStagingDirectory)/allure-results -o $(Build.ArtifactStagingDirectory)/allure-report
+
+    # Change permissions to allow Azure DevOps to access the artifact directory
+    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.ArtifactStagingDirectory)
   displayName: 'Set Up Environment and Run Tests'
+
+# Publish Allure Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
+    ArtifactName: 'AllureReport'
+  displayName: 'Publish Allure Report'
+
+# Publish JUnit Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
+    ArtifactName: 'JUnitReport'
+  displayName: 'Publish JUnit Report'
