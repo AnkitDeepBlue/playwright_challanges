@@ -50,4 +50,4 @@ RUN . venv/bin/activate && \
 ENV PYTHONPATH=/app
 
 # Run the tests
-CMD . venv/bin/activate && pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results.xml && allure generate allure-results -o allure-report
+CMD . venv/bin/activate && pytest tests/test_table.py --alluredir=/app/allure-results --junitxml=/app/junit-results.xml && allure generate /app/allure-results -o /app/allure-report && chown -R root:root /app/allure-results /app/allure-report /app/junit-results.xml
