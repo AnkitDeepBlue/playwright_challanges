@@ -5,18 +5,36 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: Baba12224454
+  SUDO_PASSWORD: $(SUDO_PASSWORD)
 
 steps:
+- task: UseNode@1
+  inputs:
+    version: '14.x'
+  displayName: 'Use Node.js'
+
 - checkout: self
 
+# Install Docker
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get update
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce docker-ce-cli containerd.io
     echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
     echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
     echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
-  displayName: 'Install Docker'
+    echo "${SUDO_PASSWORD}" | sudo -S chmod 666 /var/run/docker.sock
+  displayName: 'Install and Start Docker'
+
+# Ensure the Docker group change takes effect
+- script: |
+    newgrp docker <<EONG
+    echo "Docker group applied"
+    EONG
+  displayName: 'Apply Docker Group Change'
 
 # Build Docker Image
 - script: |
@@ -25,19 +43,29 @@ steps:
 
 # Run Tests in Docker Container
 - script: |
-    docker run --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image
+    docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
+    cd /src &&
+    python3 -m venv venv &&
+    source venv/bin/activate &&
+    pip install --upgrade pip &&
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+    pip install pytest allure-pytest junit-xml &&
+    if [ -f package.json ]; then npm install; fi &&
+    npx playwright install &&
+    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml &&
+    allure generate /artifacts/allure-results -o /artifacts/allure-report"
   displayName: 'Run Tests in Docker Container'
 
 # Publish Allure Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/allure-report'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
     ArtifactName: 'AllureReport'
   displayName: 'Publish Allure Report'
 
 # Publish JUnit Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/junit-results.xml'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
