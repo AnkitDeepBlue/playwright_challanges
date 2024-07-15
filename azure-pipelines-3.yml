@@ -5,10 +5,10 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: Baba12224454  # Use Azure DevOps secret variables for security
+  SUDO_PASSWORD: Baba12224454
 
 steps:
-# Step to install Docker if it's not already installed
+# Install Docker if not installed
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
     echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y \
@@ -22,90 +22,49 @@ steps:
        $(lsb_release -cs) \
        stable"
     sudo apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce
-    sudo usermod -aG docker $(whoami)
+    sudo apt-get install -y docker-ce
   displayName: 'Install Docker'
 
-# Step to restart the agent to apply Docker permissions
+# Add user to Docker group
+- script: |
+    sudo usermod -aG docker $(whoami)
+    newgrp docker
+  displayName: 'Add user to Docker group'
+
+# Restart Docker service
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S systemctl restart docker
-  displayName: 'Restart Docker Service'
+  displayName: 'Restart Docker service'
 
-# Step to build the Docker image
+# Build Docker Image
 - script: |
-    echo "FROM ubuntu:20.04
-    RUN apt-get update && apt-get install -y python3 python3-pip python3-venv \
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libxkbcommon0 \
-        libpango-1.0-0 \
-        libcairo2 \
-        libx11-xcb1 \
-        libxcursor1 \
-        libxi6 \
-        libgtk-3-0 \
-        libpangocairo-1.0-0 \
-        libcairo-gobject2 \
-        libgdk-pixbuf2.0-0 \
-        zip \
-        curl && \
-        curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
-        apt-get install -y nodejs && \
-        npm install -g allure-commandline
-    COPY . /workspace
-    WORKDIR /workspace
-    RUN python3 -m venv venv && \
-        source venv/bin/activate && \
-        pip install --upgrade pip && \
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo 'requirements.txt not found'; fi && \
-        if [ -f package.json ]; then npm install; fi && \
-        npx playwright install
-    " > Dockerfile
-    docker build -t test-image .
+    docker build -t my-python-image .
   displayName: 'Build Docker Image'
 
-# Step to run tests and generate reports in Docker container
+# Run the Docker Container and execute the pipeline steps
 - script: |
-    docker run --rm -v $(Build.SourcesDirectory):/workspace -w /workspace test-image /bin/bash -c "
-      source venv/bin/activate && \
-      export PYTHONPATH=$(Build.SourcesDirectory) && \
-      pytest tests/test_table.py --alluredir=allure-results --junitxml=junit.xml && \
-      allure generate allure-results -o allure-report || echo 'Allure report generation failed.'
-    "
-  displayName: 'Run tests and generate reports in Docker container'
+    docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
+      cd /src && 
+      python3 -m venv venv && 
+      source venv/bin/activate && 
+      pip install --upgrade pip && 
+      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
+      pip install pytest allure-pytest junit-xml && 
+      if [ -f package.json ]; then npm install; fi && 
+      npx playwright install && 
+      pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml"
+  displayName: 'Run Tests in Docker Container'
 
-# Publish JUnit Test Results
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: '**/junit.xml'
-    mergeTestResults: true
-    testRunTitle: 'JUnit Test Results'
-
-# Publish Allure Report as artifact
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Build.SourcesDirectory)/allure-report'
-    artifactName: 'AllureReport'
-    publishLocation: 'Container'
-
-# Publish Allure Report HTML file as a separate artifact for easy access
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(Build.SourcesDirectory)/allure-report'
-    Contents: '**/*'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)/AllureReport'
-  displayName: 'Copy Allure Report to Staging Directory'
-
+# Publish Allure Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/AllureReport'
-    ArtifactName: 'AllureReportHTML'
-    publishLocation: 'Container'
-  displayName: 'Publish Allure Report HTML as Build Artifact'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-results'
+    ArtifactName: 'AllureReport'
+  displayName: 'Publish Allure Report'
+
+# Publish JUnit Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
+    ArtifactName: 'JUnitReport'
+  displayName: 'Publish JUnit Report'
