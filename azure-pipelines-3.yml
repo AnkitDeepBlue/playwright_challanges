@@ -5,18 +5,32 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: $(YourActualPasswordHere)  # Use Azure DevOps secret variables for security
+  SUDO_PASSWORD: Baba12224454  # Use Azure DevOps secret variables for security
 
 steps:
-- task: UseNode@1
-  inputs:
-    version: '14.x'
-  displayName: 'Use Node.js'
-
+# Step to install Docker if it's not already installed
 - script: |
-    # Update and install necessary system dependencies for Playwright
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y libatk1.0-0 \
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository \
+       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+       $(lsb_release -cs) \
+       stable"
+    sudo apt-get update
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce
+    sudo usermod -aG docker $(whoami)
+  displayName: 'Install Docker'
+
+# Step to build the Docker image
+- script: |
+    echo "FROM ubuntu:20.04
+    RUN apt-get update && apt-get install -y python3 python3-pip python3-venv \
+        libatk1.0-0 \
         libatk-bridge2.0-0 \
         libcups2 \
         libatspi2.0-0 \
@@ -35,72 +49,58 @@ steps:
         libpangocairo-1.0-0 \
         libcairo-gobject2 \
         libgdk-pixbuf2.0-0 \
-        python3-venv
+        zip \
+        curl && \
+        curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
+        apt-get install -y nodejs && \
+        npm install -g allure-commandline
+    COPY . /workspace
+    WORKDIR /workspace
+    RUN python3 -m venv venv && \
+        source venv/bin/activate && \
+        pip install --upgrade pip && \
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo 'requirements.txt not found'; fi && \
+        if [ -f package.json ]; then npm install; fi && \
+        npx playwright install
+    " > Dockerfile
+    docker build -t test-image .
+  displayName: 'Build Docker Image'
 
-    # Install Java (required for Allure)
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y default-jre
+# Step to run tests and generate reports in Docker container
+- script: |
+    docker run --rm -v $(Build.SourcesDirectory):/workspace -w /workspace test-image /bin/bash -c "
+      source venv/bin/activate && \
+      export PYTHONPATH=$(Build.SourcesDirectory) && \
+      pytest tests/test_table.py --alluredir=allure-results --junitxml=junit.xml && \
+      allure generate allure-results -o allure-report || echo 'Allure report generation failed.'
+    "
+  displayName: 'Run tests and generate reports in Docker container'
 
-    # Navigate to the project directory
-    cd $(Build.SourcesDirectory)
+# Publish JUnit Test Results
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/junit.xml'
+    mergeTestResults: true
+    testRunTitle: 'JUnit Test Results'
 
-    # Set up a Python virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
-
-    # Upgrade pip
-    pip install --upgrade pip
-
-    # Install Python dependencies from requirements.txt if it exists
-    if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
-
-    # Ensure pytest, allure-pytest, and junit2html are installed
-    pip install pytest allure-pytest junit2html
-
-    # Install Node.js dependencies
-    if [ -f package.json ]; then npm install; fi
-
-    # Install Playwright browsers
-    npx playwright install
-
-    # Set PYTHONPATH to include the project root
-    export PYTHONPATH=$(Build.SourcesDirectory)
-
-    # Run the tests with pytest and generate Allure and JUnit XML reports
-    pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results/results.xml
-
-    # Generate Allure HTML report
-    allure generate allure-results -o allure-report
-
-    # Convert JUnit XML to HTML
-    junit2html junit-results/results.xml junit-results/results.html
-  env:
-    SUDO_PASSWORD: $(SUDO_PASSWORD)
-  displayName: 'Set Up Environment, Run Tests, and Generate Reports'
-
+# Publish Allure Report as artifact
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Build.SourcesDirectory)/allure-report'
     artifactName: 'AllureReport'
-    publishLocation: 'pipeline'
-  displayName: 'Publish Allure Report as Artifact'
+    publishLocation: 'Container'
 
-- task: PublishPipelineArtifact@1
+# Publish Allure Report HTML file as a separate artifact for easy access
+- task: CopyFiles@2
   inputs:
-    targetPath: '$(Build.SourcesDirectory)/junit-results'
-    artifactName: 'JUnitReport'
-    publishLocation: 'pipeline'
-  displayName: 'Publish JUnit Report as Artifact'
+    SourceFolder: '$(Build.SourcesDirectory)/allure-report'
+    Contents: '**/*'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/AllureReport'
+  displayName: 'Copy Allure Report to Staging Directory'
 
 - task: PublishBuildArtifacts@1
   inputs:
-    pathtoPublish: '$(Build.SourcesDirectory)/allure-report'
-    artifactName: 'AllureHtmlReport'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/AllureReport'
+    ArtifactName: 'AllureReportHTML'
     publishLocation: 'Container'
-  displayName: 'Publish Allure HTML Report'
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.SourcesDirectory)/junit-results/results.html'
-    artifactName: 'JUnitHtmlReport'
-    publishLocation: 'Container'
-  displayName: 'Publish JUnit HTML Report'
+  displayName: 'Publish Allure Report HTML as Build Artifact'
