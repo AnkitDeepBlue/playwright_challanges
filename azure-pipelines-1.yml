@@ -11,12 +11,9 @@ steps:
   displayName: 'Use Node.js'
 
 - script: |
-    # Navigate to the project directory
-    cd $WORKSPACE
-
-    # Install system dependencies for Playwright
-    sudo apt-get update
-    sudo apt-get install -y libatk1.0-0 \
+    # Install necessary system dependencies for Playwright
+    echo "your_sudo_password" | sudo -S apt-get update
+    echo "your_sudo_password" | sudo -S apt-get install -y libatk1.0-0 \
         libatk-bridge2.0-0 \
         libcups2 \
         libatspi2.0-0 \
@@ -27,7 +24,11 @@ steps:
         libgbm1 \
         libxkbcommon0 \
         libpango-1.0-0 \
-        libcairo2
+        libcairo2 \
+        python3-venv
+
+    # Navigate to the project directory
+    cd $WORKSPACE
 
     # Set up a Python virtual environment
     python3 -m venv venv
@@ -38,6 +39,9 @@ steps:
 
     # Install dependencies from requirements.txt
     pip install -r requirements.txt
+
+    # Install Node.js dependencies
+    npm install
 
     # Install Playwright browsers
     npx playwright install
