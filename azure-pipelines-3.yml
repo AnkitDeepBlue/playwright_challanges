@@ -5,7 +5,7 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: $(SUDO_PASSWORD)
+  SUDO_PASSWORD: Baba12224454  # Ensure this is set correctly or use Azure DevOps secure files
 
 steps:
 - task: UseNode@1
@@ -35,7 +35,11 @@ steps:
         libpangocairo-1.0-0 \
         libcairo-gobject2 \
         libgdk-pixbuf2.0-0 \
-        python3-venv
+        python3-venv \
+        openjdk-11-jdk
+
+    # Set JAVA_HOME
+    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
     # Navigate to the project directory
     cd $(Build.SourcesDirectory)
@@ -70,7 +74,7 @@ steps:
 
 - task: PublishTestResults@2
   inputs:
-    testResultsFiles: '**/allure-results/*.xml'
+    testResultsFiles: 'allure-results/*.xml'
     testResultsFormat: 'JUnit'
     mergeTestResults: true
     failTaskOnFailedTests: true
