@@ -62,14 +62,16 @@ steps:
     # Set PYTHONPATH to include the project root
     export PYTHONPATH=$(Build.SourcesDirectory)
 
+    # Change permissions to allow access to all necessary directories and files
+    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.SourcesDirectory)
+    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.ArtifactStagingDirectory)
+    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 /home/azureuser/myagent/_work
+
     # Run the tests with pytest and generate Allure and JUnit reports
     pytest tests/test_table.py --alluredir=$(Build.ArtifactStagingDirectory)/allure-results --junitxml=$(Build.ArtifactStagingDirectory)/junit-results.xml
 
     # Generate Allure report
     allure generate $(Build.ArtifactStagingDirectory)/allure-results -o $(Build.ArtifactStagingDirectory)/allure-report
-
-    # Change permissions to allow Azure DevOps to access the artifact directory
-    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.ArtifactStagingDirectory)
   displayName: 'Set Up Environment and Run Tests'
 
 # Publish Allure Report
