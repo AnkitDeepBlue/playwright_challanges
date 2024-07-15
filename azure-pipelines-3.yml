@@ -1,0 +1,94 @@
+trigger:
+- master
+
+pool:
+  name: 'private_pool'
+
+variables:
+  SUDO_PASSWORD: $(SUDO_PASSWORD)
+
+steps:
+- task: UseNode@1
+  inputs:
+    version: '14.x'
+  displayName: 'Use Node.js'
+
+- script: |
+    # Update and install necessary system dependencies for Playwright
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get update
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libatspi2.0-0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libxkbcommon0 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libx11-xcb1 \
+        libxcursor1 \
+        libxi6 \
+        libgtk-3-0 \
+        libpangocairo-1.0-0 \
+        libcairo-gobject2 \
+        libgdk-pixbuf2.0-0 \
+        python3-venv
+
+    # Navigate to the project directory
+    cd $(Build.SourcesDirectory)
+
+    # Set up a Python virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
+
+    # Upgrade pip
+    pip install --upgrade pip
+
+    # Install Python dependencies from requirements.txt if it exists
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
+
+    # Ensure pytest and Allure are installed
+    pip install pytest allure-pytest
+
+    # Install Node.js dependencies
+    if [ -f package.json ]; then npm install; fi
+
+    # Install Playwright browsers
+    npx playwright install
+
+    # Set PYTHONPATH to include the project root
+    export PYTHONPATH=$(Build.SourcesDirectory)
+
+    # Run the tests with pytest and generate Allure reports
+    pytest tests/test_table.py --alluredir=allure-results
+  env:
+    SUDO_PASSWORD: $(SUDO_PASSWORD)
+  displayName: 'Set Up Environment and Run Tests'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/allure-results/*.xml'
+    testResultsFormat: 'JUnit'
+    mergeTestResults: true
+    failTaskOnFailedTests: true
+  displayName: 'Publish Test Results'
+
+- task: CmdLine@2
+  inputs:
+    script: 'npm install -g allure-commandline'
+  displayName: 'Install Allure Commandline'
+
+- task: CmdLine@2
+  inputs:
+    script: 'allure generate $(Build.SourcesDirectory)/allure-results -o $(Build.SourcesDirectory)/allure-report'
+  displayName: 'Generate Allure Report'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.SourcesDirectory)/allure-report'
+    artifactName: 'AllureReport'
+    publishLocation: 'pipeline'
+  displayName: 'Publish Allure Report Artifact'
