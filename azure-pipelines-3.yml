@@ -26,6 +26,11 @@ steps:
     sudo usermod -aG docker $(whoami)
   displayName: 'Install Docker'
 
+# Step to restart the agent to apply Docker permissions
+- script: |
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl restart docker
+  displayName: 'Restart Docker Service'
+
 # Step to build the Docker image
 - script: |
     echo "FROM ubuntu:20.04
