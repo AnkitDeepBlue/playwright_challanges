@@ -15,62 +15,20 @@ steps:
 
 - checkout: self
 
-# Install necessary dependencies and set up the environment
+# Build Docker Image
 - script: |
-    # Update and install necessary system dependencies for Playwright
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libxkbcommon0 \
-        libpango-1.0-0 \
-        libcairo2 \
-        libx11-xcb1 \
-        libxcursor1 \
-        libxi6 \
-        libgtk-3-0 \
-        libpangocairo-1.0-0 \
-        libcairo-gobject2 \
-        libgdk-pixbuf2.0-0 \
-        python3-venv
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
+    echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
+    docker build -t my-python-image .
+  displayName: 'Build Docker Image'
 
-    # Navigate to the project directory
-    cd $(Build.SourcesDirectory)
-
-    # Set up a Python virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
-
-    # Upgrade pip
-    pip install --upgrade pip
-
-    # Install Python dependencies from requirements.txt if it exists
-    if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
-
-    # Ensure pytest and other dependencies are installed
-    pip install pytest allure-pytest junit-xml
-
-    # Install Node.js dependencies
-    if [ -f package.json ]; then npm install; fi
-
-    # Install Playwright browsers
-    npx playwright install
-
-    # Set PYTHONPATH to include the project root
-    export PYTHONPATH=$(Build.SourcesDirectory)
-
-    # Run the tests with pytest and generate Allure and JUnit reports
-    pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results.xml
-
-    # Generate Allure report
-    allure generate allure-results -o allure-report
-  displayName: 'Set Up Environment and Run Tests'
+# Run Tests in Docker Container
+- script: |
+    docker run --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image
+  displayName: 'Run Tests in Docker Container'
 
 # Publish Allure Report
 - task: PublishBuildArtifacts@1
