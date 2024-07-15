@@ -5,7 +5,7 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: Baba12224454  # Use Azure DevOps secret variables for security
+  SUDO_PASSWORD: $(YourActualPasswordHere)  # Use Azure DevOps secret variables for security
 
 steps:
 - task: UseNode@1
@@ -53,8 +53,8 @@ steps:
     # Install Python dependencies from requirements.txt if it exists
     if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
 
-    # Ensure pytest and allure are installed
-    pip install pytest allure-pytest
+    # Ensure pytest, allure-pytest, and junit2html are installed
+    pip install pytest allure-pytest junit2html
 
     # Install Node.js dependencies
     if [ -f package.json ]; then npm install; fi
@@ -65,11 +65,14 @@ steps:
     # Set PYTHONPATH to include the project root
     export PYTHONPATH=$(Build.SourcesDirectory)
 
-    # Run the tests with pytest and generate Allure and JUnit reports
+    # Run the tests with pytest and generate Allure and JUnit XML reports
     pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results/results.xml
 
-    # Generate Allure report
+    # Generate Allure HTML report
     allure generate allure-results -o allure-report
+
+    # Convert JUnit XML to HTML
+    junit2html junit-results/results.xml junit-results/results.html
   env:
     SUDO_PASSWORD: $(SUDO_PASSWORD)
   displayName: 'Set Up Environment, Run Tests, and Generate Reports'
@@ -79,11 +82,25 @@ steps:
     targetPath: '$(Build.SourcesDirectory)/allure-report'
     artifactName: 'AllureReport'
     publishLocation: 'pipeline'
-  displayName: 'Publish Allure Report'
+  displayName: 'Publish Allure Report as Artifact'
 
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Build.SourcesDirectory)/junit-results'
     artifactName: 'JUnitReport'
     publishLocation: 'pipeline'
-  displayName: 'Publish JUnit Report'
+  displayName: 'Publish JUnit Report as Artifact'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.SourcesDirectory)/allure-report'
+    artifactName: 'AllureHtmlReport'
+    publishLocation: 'Container'
+  displayName: 'Publish Allure HTML Report'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.SourcesDirectory)/junit-results/results.html'
+    artifactName: 'JUnitHtmlReport'
+    publishLocation: 'Container'
+  displayName: 'Publish JUnit HTML Report'
