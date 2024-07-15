@@ -22,13 +22,12 @@ steps:
        $(lsb_release -cs) \
        stable"
     sudo apt-get update
-    sudo apt-get install -y docker-ce
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce
   displayName: 'Install Docker'
 
 # Add user to Docker group
 - script: |
-    sudo usermod -aG docker $(whoami)
-    newgrp docker
+    echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
   displayName: 'Add user to Docker group'
 
 # Restart Docker service
