@@ -13,6 +13,21 @@ steps:
     version: '14.x'
   displayName: 'Use Node.js'
 
+# Remove Docker if previously installed
+- script: |
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get remove -y docker docker-engine docker.io containerd runc
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get autoremove -y
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /var/lib/docker
+  displayName: 'Remove Docker'
+
+# Clean up any residual Docker files and reset permissions
+- script: |
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/s/venv
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/_temp/*
+    echo "${SUDO_PASSWORD}" | sudo -S chown -R $(whoami):$(whoami) /home/azureuser/myagent/_work
+  displayName: 'Clean Up and Reset Permissions'
+
+# Install necessary dependencies and set up the environment
 - script: |
     # Update and install necessary system dependencies for Playwright
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
@@ -62,28 +77,23 @@ steps:
     # Set PYTHONPATH to include the project root
     export PYTHONPATH=$(Build.SourcesDirectory)
 
-    # Change permissions to allow access to all necessary directories and files
-    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.SourcesDirectory)
-    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 $(Build.ArtifactStagingDirectory)
-    echo "${SUDO_PASSWORD}" | sudo -S chmod -R 777 /home/azureuser/myagent/_work
-
     # Run the tests with pytest and generate Allure and JUnit reports
-    pytest tests/test_table.py --alluredir=$(Build.ArtifactStagingDirectory)/allure-results --junitxml=$(Build.ArtifactStagingDirectory)/junit-results.xml
+    pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results.xml
 
     # Generate Allure report
-    allure generate $(Build.ArtifactStagingDirectory)/allure-results -o $(Build.ArtifactStagingDirectory)/allure-report
+    allure generate allure-results -o allure-report
   displayName: 'Set Up Environment and Run Tests'
 
 # Publish Allure Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
+    PathtoPublish: '$(Build.SourcesDirectory)/allure-report'
     ArtifactName: 'AllureReport'
   displayName: 'Publish Allure Report'
 
 # Publish JUnit Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
+    PathtoPublish: '$(Build.SourcesDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
