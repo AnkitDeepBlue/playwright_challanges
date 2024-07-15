@@ -67,18 +67,18 @@ steps:
     export PYTHONPATH=$(Build.SourcesDirectory)
 
     # Run the tests with pytest and generate Allure reports
-    pytest tests/test_table.py --alluredir=allure-results
+    pytest tests/test_table.py --junitxml=pytest-results.xml --alluredir=allure-results
   env:
     SUDO_PASSWORD: $(SUDO_PASSWORD)
   displayName: 'Set Up Environment and Run Tests'
 
 - task: PublishTestResults@2
   inputs:
-    testResultsFiles: 'allure-results/*.xml'
+    testResultsFiles: '**/pytest-results.xml'
     testResultsFormat: 'JUnit'
     mergeTestResults: true
     failTaskOnFailedTests: true
-  displayName: 'Publish Test Results'
+  displayName: 'Publish JUnit Test Results'
 
 - task: CmdLine@2
   inputs:
@@ -96,3 +96,13 @@ steps:
     artifactName: 'AllureReport'
     publishLocation: 'pipeline'
   displayName: 'Publish Allure Report Artifact'
+
+- task: CmdLine@2
+  inputs:
+    script: 'allure open -p 8080 $(Build.SourcesDirectory)/allure-report'
+  displayName: 'Host Allure Report'
+
+- task: CmdLine@2
+  inputs:
+    script: 'curl http://localhost:8080'
+  displayName: 'Check Allure Report Availability'
