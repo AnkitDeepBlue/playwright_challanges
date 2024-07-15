@@ -13,19 +13,7 @@ steps:
     version: '14.x'
   displayName: 'Use Node.js'
 
-# Remove Docker if previously installed
-- script: |
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get remove -y docker docker-engine docker.io containerd runc
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get autoremove -y
-    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /var/lib/docker
-  displayName: 'Remove Docker'
-
-# Clean up any residual Docker files and reset permissions
-- script: |
-    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/s/venv
-    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/_temp/*
-    echo "${SUDO_PASSWORD}" | sudo -S chown -R $(whoami):$(whoami) /home/azureuser/myagent/_work
-  displayName: 'Clean Up and Reset Permissions'
+- checkout: self
 
 # Install necessary dependencies and set up the environment
 - script: |
