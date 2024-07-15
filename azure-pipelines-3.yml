@@ -19,42 +19,29 @@ steps:
     echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
   displayName: 'Install and Start Docker'
 
-# Create Dockerfile dynamically
-- script: |
-    cat <<EOF > Dockerfile
-    FROM python:3.11
-    WORKDIR /app
-    RUN apt-get update && \
-        apt-get install -y openjdk-11-jre nodejs npm && \
-        npm install -g allure-commandline@2.18.1
-    COPY requirements.txt /app/requirements.txt
-    RUN python -m venv venv && \
-        . venv/bin/activate && \
-        pip install --upgrade pip && \
-        pip install -r requirements.txt && \
-        npx playwright install --with-deps
-    COPY . /app
-    EOF
-  displayName: 'Create Dockerfile'
-
 # Build Docker Image
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S docker build -t my-python-image .
   displayName: 'Build Docker Image'
 
-# Run Tests and Generate Reports in Docker Container
+# Run Tests in Docker Container
 - script: |
-    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
-    cd /app &&
+    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
+    cd /src &&
+    python3 -m venv venv &&
     source venv/bin/activate &&
-    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml &&
-    allure generate /artifacts/allure-results -o /artifacts/allure-report"
-  displayName: 'Run Tests and Generate Reports in Docker Container'
+    pip install --upgrade pip &&
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+    pip install pytest allure-pytest junit-xml &&
+    if [ -f package.json ]; then npm install; fi &&
+    npx playwright install &&
+    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml"
+  displayName: 'Run Tests in Docker Container'
 
 # Publish Allure Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-results'
     ArtifactName: 'AllureReport'
   displayName: 'Publish Allure Report'
 
