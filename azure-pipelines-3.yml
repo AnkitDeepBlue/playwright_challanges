@@ -7,38 +7,27 @@ pool:
 variables:
   SUDO_PASSWORD: Baba12224454
 
+resources:
+  containers:
+  - container: docker
+    image: docker:19.03.12
+    options: '--privileged'  # This enables DinD (Docker-in-Docker)
+
 steps:
-# Install Docker if not installed
+- checkout: self
+
+# Install Docker CLI
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y \
-        apt-transport-https \
-        ca-certificates \
-        curl \
-        software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository \
-       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-       $(lsb_release -cs) \
-       stable"
-    sudo apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce
-  displayName: 'Install Docker'
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker-ce-cli
+  displayName: 'Install Docker CLI'
 
-# Add user to Docker group
+# Build Docker Image
 - script: |
-    echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
-    echo "${SUDO_PASSWORD}" | sudo -S systemctl restart docker
-  displayName: 'Add user to Docker group and restart Docker'
-
-# Enable the current shell to recognize the group change without re-login
-- script: |
-    newgrp docker <<EOF
     docker build -t my-python-image .
-    EOF
   displayName: 'Build Docker Image'
 
-# Run the Docker Container and execute the pipeline steps
+# Run Tests in Docker Container
 - script: |
     docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
       cd /src && 
