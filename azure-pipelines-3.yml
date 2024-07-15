@@ -5,49 +5,65 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: Baba12224454
+  SUDO_PASSWORD: $(SUDO_PASSWORD)
 
 steps:
-- checkout: self
+- task: UseNode@1
+  inputs:
+    version: '14.x'
+  displayName: 'Use Node.js'
 
-# Install Docker
 - script: |
+    # Update and install necessary system dependencies for Playwright
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
-    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
-    echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
-    echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
-    echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
-  displayName: 'Install and Start Docker'
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libatspi2.0-0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libxkbcommon0 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libx11-xcb1 \
+        libxcursor1 \
+        libxi6 \
+        libgtk-3-0 \
+        libpangocairo-1.0-0 \
+        libcairo-gobject2 \
+        libgdk-pixbuf2.0-0 \
+        python3-venv
 
-# Build Docker Image
-- script: |
-    echo "${SUDO_PASSWORD}" | sudo -S docker build -t my-python-image .
-  displayName: 'Build Docker Image'
+    # Navigate to the project directory
+    cd $(Build.SourcesDirectory)
 
-# Run Tests in Docker Container
-- script: |
-    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
-    cd /src &&
-    python3 -m venv venv &&
-    source venv/bin/activate &&
-    pip install --upgrade pip &&
-    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
-    pip install pytest allure-pytest junit-xml &&
-    if [ -f package.json ]; then npm install; fi &&
-    npx playwright install &&
-    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml"
-  displayName: 'Run Tests in Docker Container'
+    # Set up a Python virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
 
-# Publish Allure Report
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-results'
-    ArtifactName: 'AllureReport'
-  displayName: 'Publish Allure Report'
+    # Upgrade pip
+    pip install --upgrade pip
 
-# Publish JUnit Report
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
-    ArtifactName: 'JUnitReport'
-  displayName: 'Publish JUnit Report'
+    # Install Python dependencies from requirements.txt if it exists
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "requirements.txt not found"; fi
+
+    # Ensure pytest is installed
+    pip install pytest
+
+    # Install Node.js dependencies
+    if [ -f package.json ]; then npm install; fi
+
+    # Install Playwright browsers
+    npx playwright install
+
+    # Set PYTHONPATH to include the project root
+    export PYTHONPATH=$(Build.SourcesDirectory)
+
+    # Run the tests with pytest and generate Allure reports
+    pytest tests/test_table.py --alluredir=allure-results
+  env:
+    SUDO_PASSWORD: $(SUDO_PASSWORD)
+  displayName: 'Set Up Environment and Run Tests'
