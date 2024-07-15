@@ -28,16 +28,14 @@ steps:
 # Add user to Docker group
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
-  displayName: 'Add user to Docker group'
-
-# Restart Docker service
-- script: |
     echo "${SUDO_PASSWORD}" | sudo -S systemctl restart docker
-  displayName: 'Restart Docker service'
+  displayName: 'Add user to Docker group and restart Docker'
 
-# Build Docker Image
+# Enable the current shell to recognize the group change without re-login
 - script: |
+    newgrp docker <<EOF
     docker build -t my-python-image .
+    EOF
   displayName: 'Build Docker Image'
 
 # Run the Docker Container and execute the pipeline steps
