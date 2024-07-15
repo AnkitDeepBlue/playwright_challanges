@@ -42,30 +42,25 @@ steps:
     echo "${SUDO_PASSWORD}" | sudo -S docker build -t my-python-image .
   displayName: 'Build Docker Image'
 
-# Run Tests in Docker Container
+# Run Tests and Generate Reports in Docker Container
 - script: |
-    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.SourcesDirectory):/src -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
-    cd /src &&
+    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
+    cd /app &&
     source venv/bin/activate &&
-    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml"
-  displayName: 'Run Tests in Docker Container'
-
-# Generate Allure Report
-- script: |
-    echo "${SUDO_PASSWORD}" | sudo -S docker run --rm -v $(Build.ArtifactStagingDirectory)/allure-results:/allure-results -v $(Build.ArtifactStagingDirectory)/allure-report:/allure-report my-python-image /bin/bash -c "
-    allure generate /allure-results -o /allure-report"
-  displayName: 'Generate Allure Report'
+    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml &&
+    allure generate /artifacts/allure-results -o /artifacts/allure-report"
+  displayName: 'Run Tests and Generate Reports in Docker Container'
 
 # Publish Allure Report
-- task: PublishPipelineArtifact@1
+- task: PublishBuildArtifacts@1
   inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)/allure-report'
-    artifact: 'AllureReport'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
+    ArtifactName: 'AllureReport'
   displayName: 'Publish Allure Report'
 
 # Publish JUnit Report
-- task: PublishPipelineArtifact@1
+- task: PublishBuildArtifacts@1
   inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
-    artifact: 'JUnitReport'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
+    ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
