@@ -37,6 +37,9 @@ steps:
         libgdk-pixbuf2.0-0 \
         python3-venv
 
+    # Install Java (required for Allure)
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y default-jre
+
     # Navigate to the project directory
     cd $(Build.SourcesDirectory)
 
@@ -62,21 +65,25 @@ steps:
     # Set PYTHONPATH to include the project root
     export PYTHONPATH=$(Build.SourcesDirectory)
 
-    # Run the tests with pytest and generate Allure reports
-    pytest tests/test_table.py --alluredir=allure-results
+    # Run the tests with pytest and generate Allure and JUnit reports
+    pytest tests/test_table.py --alluredir=allure-results --junitxml=junit-results/results.xml
 
     # Generate Allure report
     allure generate allure-results -o allure-report
-
-    # Zip the Allure report
-    zip -r allure-report.zip allure-report
   env:
     SUDO_PASSWORD: $(SUDO_PASSWORD)
-  displayName: 'Set Up Environment, Run Tests, and Generate Allure Report'
+  displayName: 'Set Up Environment, Run Tests, and Generate Reports'
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Build.SourcesDirectory)/allure-report.zip'
+    targetPath: '$(Build.SourcesDirectory)/allure-report'
     artifactName: 'AllureReport'
     publishLocation: 'pipeline'
   displayName: 'Publish Allure Report'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.SourcesDirectory)/junit-results'
+    artifactName: 'JUnitReport'
+    publishLocation: 'pipeline'
+  displayName: 'Publish JUnit Report'
