@@ -28,24 +28,19 @@ steps:
     repository: 'mcr.microsoft.com/playwright:v1.17.2-focal'
     command: 'run'
     arguments: >
-      --rm 
-      -v $(Build.SourcesDirectory):/app 
-      -v $(Build.ArtifactStagingDirectory):/artifacts 
+      --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts 
       mcr.microsoft.com/playwright:v1.17.2-focal bash -c "
       apt-get update && apt-get install -y python3-venv &&
       cd /app &&
       python3 -m venv venv && 
       source venv/bin/activate && 
       pip install --upgrade pip && 
-      pip install pytest junit-xml pytest-html allure-pytest && 
       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
+      pip install pytest junit-xml && 
       if [ -f package.json ]; then npm install; fi && 
       npx playwright install && 
       export PYTHONPATH=/app && 
-      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml --html=/artifacts/report.html --self-contained-html --alluredir=/artifacts/allure-results && 
-      allure generate /artifacts/allure-results -o /artifacts/allure-report && 
-      mv /artifacts/allure-report/* /artifacts/ && 
-      rm -r /artifacts/allure-report"
+      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml"
   displayName: 'Run Tests in Playwright Container'
 
 # Publish JUnit Report
@@ -54,17 +49,3 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
-
-# Publish HTML Report
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/report.html'
-    ArtifactName: 'HTMLReport'
-  displayName: 'Publish HTML Report'
-
-# Publish Allure Report
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report/index.html'
-    ArtifactName: 'AllureReport'
-  displayName: 'Publish Allure Report'
