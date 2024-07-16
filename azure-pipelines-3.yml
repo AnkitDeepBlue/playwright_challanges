@@ -10,8 +10,8 @@ variables:
 steps:
 - task: UseNode@1
   inputs:
-    version: '14.x'
-  displayName: 'Use Node.js'
+    version: '18.x'
+  displayName: 'Use Node.js 18'
 
 # Clean up old files and directories before checkout
 - script: |
@@ -31,7 +31,7 @@ steps:
       --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts 
       mcr.microsoft.com/playwright:v1.17.2-focal bash -c "
       apt-get update && apt-get install -y python3-venv &&
-      cd /app && 
+      cd /app &&
       python3 -m venv venv && 
       source venv/bin/activate && 
       pip install --upgrade pip && 
@@ -39,6 +39,7 @@ steps:
       pip install pytest junit-xml && 
       if [ -f package.json ]; then npm install; fi && 
       npx playwright install && 
+      export PYTHONPATH=/app && 
       pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml"
   displayName: 'Run Tests in Playwright Container'
 
