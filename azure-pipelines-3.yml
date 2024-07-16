@@ -19,6 +19,8 @@ steps:
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.SourcesDirectory)/*
     echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.ArtifactStagingDirectory)/*
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/s/*
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/a/*
   displayName: 'Clean up old files'
 
 # Use a Docker container to run the tests
