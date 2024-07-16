@@ -17,8 +17,8 @@ steps:
 
 # Clean up old files and directories
 - script: |
-    sudo rm -rf $(Build.SourcesDirectory)/* 
-    sudo rm -rf $(Build.ArtifactStagingDirectory)/*
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.SourcesDirectory)/* 
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.ArtifactStagingDirectory)/*
   displayName: 'Clean up old files'
 
 # Use a Docker container to run the tests
