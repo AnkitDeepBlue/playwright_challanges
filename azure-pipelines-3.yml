@@ -36,11 +36,11 @@ steps:
       source venv/bin/activate && 
       pip install --upgrade pip && 
       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
-      pip install pytest junit-xml && 
+      pip install pytest junit-xml pytest-html && 
       if [ -f package.json ]; then npm install; fi && 
       npx playwright install && 
       export PYTHONPATH=/app && 
-      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml"
+      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml --html=/artifacts/test_report.html --self-contained-html"
   displayName: 'Run Tests in Playwright Container'
 
 # Publish JUnit Report
@@ -49,3 +49,10 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
+
+# Publish HTML Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/test_report.html'
+    ArtifactName: 'HTMLReport'
+  displayName: 'Publish HTML Report'
