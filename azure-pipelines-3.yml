@@ -5,43 +5,46 @@ pool:
   name: 'private_pool'
 
 variables:
-  SUDO_PASSWORD: $(SUDO_PASSWORD)
+  SUDO_PASSWORD: Baba12224454
 
 steps:
 - checkout: self
 
-# Build Docker Image
-- task: Docker@2
-  inputs:
-    command: 'build'
-    Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-    tags: 'my-python-image'
-  displayName: 'Build Docker Image'
+# Build Docker Image using Playwright base image
+- script: |
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get update
+    echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl start docker
+    echo "${SUDO_PASSWORD}" | sudo -S systemctl enable docker
+    echo "${SUDO_PASSWORD}" | sudo -S usermod -aG docker $(whoami)
+    docker pull mcr.microsoft.com/playwright/python:v1.45.0-focal
+    docker build -t my-python-image -f $(Build.SourcesDirectory)/Dockerfile .
+  displayName: 'Install Docker and Build Docker Image'
 
 # Run Tests in Docker Container
-- task: Docker@2
-  inputs:
-    command: 'run'
-    imageName: 'my-python-image'
-    options: '--rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts'
-    containerCommand: '/bin/bash -c "
+- script: |
+    docker run --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts my-python-image /bin/bash -c "
     cd /app &&
-    . venv/bin/activate &&
-    pytest tests/test_table.py --alluredir=/app/allure-results --junitxml=/app/junit-results.xml &&
-    allure generate /app/allure-results -o /app/allure-report &&
-    chown -R root:root /app/allure-results /app/allure-report /app/junit-results.xml"'
+    python3 -m venv venv &&
+    source venv/bin/activate &&
+    pip install --upgrade pip &&
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+    pip install pytest allure-pytest junit-xml &&
+    npx playwright install &&
+    pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml &&
+    allure generate /artifacts/allure-results -o /artifacts/allure-report"
   displayName: 'Run Tests in Docker Container'
 
 # Publish Allure Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/allure-report'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/allure-report'
     ArtifactName: 'AllureReport'
   displayName: 'Publish Allure Report'
 
 # Publish JUnit Report
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/junit-results.xml'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
