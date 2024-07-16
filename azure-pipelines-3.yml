@@ -27,58 +27,41 @@ steps:
     containerRegistry: ''
     repository: 'mcr.microsoft.com/playwright:v1.17.2-focal'
     command: 'run'
-    arguments: >
-      --rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts 
-      mcr.microsoft.com/playwright:v1.17.2-focal bash -c "
-      apt-get update && apt-get install -y python3-venv &&
-      cd /app &&
-      python3 -m venv venv && 
-      source venv/bin/activate && 
-      pip install --upgrade pip && 
-      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
-      pip install pytest junit-xml pytest-html && 
-      if [ -f package.json ]; then npm install; fi && 
-      npx playwright install && 
-      export PYTHONPATH=/app && 
-      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml --html=/artifacts/test_report.html --self-contained-html"
-  displayName: 'Run Tests in Playwright Container'
+    arguments: |
+      --rm 
+      -v $(Build.SourcesDirectory):/app 
+      -v $(Build.ArtifactStagingDirectory):/artifacts 
+      bash -c "
+        apt-get update && 
+        apt-get install -y python3-venv && 
+        cd /app && 
+        python3 -m venv venv && 
+        source venv/bin/activate && 
+        pip install --upgrade pip && 
+        pip install pytest junit-xml pytest-html allure-pytest && 
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
+        if [ -f package.json ]; then npm install; fi && 
+        npx playwright install && 
+        pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml --html=/artifacts/report.html --self-contained-html --alluredir=/artifacts/allure-results && 
+        allure generate /artifacts/allure-results -o /artifacts/allure-report"
 
-# Publish JUnit Report
-- task: PublishBuildArtifacts@1
+# Publish JUnit test results
+- task: PublishTestResults@2
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
-    ArtifactName: 'JUnitReport'
-  displayName: 'Publish JUnit Report'
+    testResultsFiles: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
+    testResultsFormat: 'JUnit'
+    failTaskOnFailedTests: true
 
-# Publish HTML Report
-- task: PublishBuildArtifacts@1
+# Publish HTML report
+- task: PublishPipelineArtifact@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/test_report.html'
-    ArtifactName: 'HTMLReport'
-  displayName: 'Publish HTML Report'
+    targetPath: '$(Build.ArtifactStagingDirectory)/report.html'
+    artifact: 'HTML Report'
+    publishLocation: 'pipeline'
 
-# Serve HTML Report via Azure
-- task: AzureCLI@2
+# Publish Allure report
+- task: PublishPipelineArtifact@1
   inputs:
-    azureSubscription: 'YourAzureSubscription'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      # Assuming you have an Azure Storage Account and a container named 'reports'
-      az storage blob upload --account-name yourstorageaccount --container-name reports --file $(Build.ArtifactStagingDirectory)/test_report.html --name test_report.html
-      # Generate the URL for the report
-      report_url=$(az storage blob url --account-name yourstorageaccount --container-name reports --name test_report.html --output tsv)
-      echo "##vso[task.setvariable variable=REPORT_URL]$report_url"
-  displayName: 'Upload HTML Report to Azure Storage and Get URL'
-
-# Publish Report URL
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/report_url.txt'
-    ArtifactName: 'ReportURL'
-  displayName: 'Publish Report URL'
-
-# Create a file with the report URL
-- script: |
-    echo $(REPORT_URL) > $(Build.ArtifactStagingDirectory)/report_url.txt
-  displayName: 'Create Report URL File'
+    targetPath: '$(Build.ArtifactStagingDirectory)/allure-report'
+    artifact: 'Allure Report'
+    publishLocation: 'pipeline'
