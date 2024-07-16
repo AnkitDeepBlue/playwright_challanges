@@ -28,15 +28,16 @@ steps:
     repository: 'mcr.microsoft.com/playwright:v1.17.2-focal'
     command: 'run'
     arguments: '--rm -v $(Build.SourcesDirectory):/app -v $(Build.ArtifactStagingDirectory):/artifacts mcr.microsoft.com/playwright:v1.17.2-focal bash -c "
-      cd /app && 
-      python3 -m venv venv && 
-      source venv/bin/activate && 
-      pip install --upgrade pip && 
-      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
-      pip install pytest allure-pytest junit-xml && 
-      if [ -f package.json ]; then npm install; fi && 
-      npx playwright install && 
-      pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml && 
+      apt-get update && apt-get install -y python3-venv && \
+      cd /app && \
+      python3 -m venv venv && \
+      source venv/bin/activate && \
+      pip install --upgrade pip && \
+      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && \
+      pip install pytest allure-pytest junit-xml && \
+      if [ -f package.json ]; then npm install; fi && \
+      npx playwright install && \
+      pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml && \
       allure generate /artifacts/allure-results -o /artifacts/allure-report"'
   displayName: 'Run Tests in Playwright Container'
 
