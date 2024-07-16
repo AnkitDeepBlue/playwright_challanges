@@ -13,15 +13,13 @@ steps:
     version: '14.x'
   displayName: 'Use Node.js'
 
-- checkout: self
-
-# Clean up old files and directories
+# Clean up old files and directories before checkout
 - script: |
-    echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.SourcesDirectory)/*
-    echo "${SUDO_PASSWORD}" | sudo -S rm -rf $(Build.ArtifactStagingDirectory)/*
     echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/s/*
     echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/a/*
   displayName: 'Clean up old files'
+
+- checkout: self
 
 # Use a Docker container to run the tests
 - task: Docker@2
