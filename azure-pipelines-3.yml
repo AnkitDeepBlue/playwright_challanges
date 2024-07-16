@@ -56,3 +56,29 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/test_report.html'
     ArtifactName: 'HTMLReport'
   displayName: 'Publish HTML Report'
+
+# Serve HTML Report via Azure
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'YourAzureSubscription'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Assuming you have an Azure Storage Account and a container named 'reports'
+      az storage blob upload --account-name yourstorageaccount --container-name reports --file $(Build.ArtifactStagingDirectory)/test_report.html --name test_report.html
+      # Generate the URL for the report
+      report_url=$(az storage blob url --account-name yourstorageaccount --container-name reports --name test_report.html --output tsv)
+      echo "##vso[task.setvariable variable=REPORT_URL]$report_url"
+  displayName: 'Upload HTML Report to Azure Storage and Get URL'
+
+# Publish Report URL
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/report_url.txt'
+    ArtifactName: 'ReportURL'
+  displayName: 'Publish Report URL'
+
+# Create a file with the report URL
+- script: |
+    echo $(REPORT_URL) > $(Build.ArtifactStagingDirectory)/report_url.txt
+  displayName: 'Create Report URL File'
