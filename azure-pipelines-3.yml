@@ -10,7 +10,13 @@ variables:
 steps:
 - checkout: self
 
-# Build Docker Image using Playwright base image
+# Clean up any existing Docker containers and volumes
+- script: |
+    echo "${SUDO_PASSWORD}" | sudo -S docker system prune -f
+    echo "${SUDO_PASSWORD}" | sudo -S docker volume prune -f
+  displayName: 'Clean Up Docker'
+
+# Install Docker and build Docker image
 - script: |
     echo "${SUDO_PASSWORD}" | sudo -S apt-get update
     echo "${SUDO_PASSWORD}" | sudo -S apt-get install -y docker.io
@@ -32,7 +38,8 @@ steps:
     pip install pytest allure-pytest junit-xml &&
     npx playwright install &&
     pytest tests/test_table.py --alluredir=/artifacts/allure-results --junitxml=/artifacts/junit-results.xml &&
-    allure generate /artifacts/allure-results -o /artifacts/allure-report"
+    allure generate /artifacts/allure-results -o /artifacts/allure-report &&
+    chown -R $(id -u):$(id -g) /artifacts/allure-results /artifacts/allure-report /artifacts/junit-results.xml"
   displayName: 'Run Tests in Docker Container'
 
 # Publish Allure Report
