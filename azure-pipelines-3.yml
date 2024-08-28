@@ -15,8 +15,8 @@ steps:
 
 # Clean up old files and directories before checkout
 - script: |
-    echo "${SUDO_PASSWORD}" | sudo -S find /home/azureuser/myagent/_work/3/s -mindepth 1 -delete
-    echo "${SUDO_PASSWORD}" | sudo -S find /home/azureuser/myagent/_work/3/a -mindepth 1 -delete
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/s/*
+    echo "${SUDO_PASSWORD}" | sudo -S rm -rf /home/azureuser/myagent/_work/3/a/*
   displayName: 'Clean up old files'
 
 - checkout: self
@@ -36,11 +36,11 @@ steps:
       source venv/bin/activate && 
       pip install --upgrade pip && 
       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && 
-      pip install pytest junit-xml pytest-html && 
+      pip install pytest junit-xml && 
       if [ -f package.json ]; then npm install; fi && 
       npx playwright install && 
       export PYTHONPATH=/app && 
-      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml --html=/artifacts/test_report.html --self-contained-html"
+      pytest tests/test_table.py --junitxml=/artifacts/junit-results.xml"
   displayName: 'Run Tests in Playwright Container'
 
 # Publish JUnit Report
@@ -49,36 +49,3 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/junit-results.xml'
     ArtifactName: 'JUnitReport'
   displayName: 'Publish JUnit Report'
-
-# Publish HTML Report
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/test_report.html'
-    ArtifactName: 'HTMLReport'
-  displayName: 'Publish HTML Report'
-
-# Serve HTML Report via Azure
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'YourAzureSubscription'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      # Assuming you have an Azure Storage Account and a container named 'reports'
-      az storage blob upload --account-name yourstorageaccount --container-name reports --file $(Build.ArtifactStagingDirectory)/test_report.html --name test_report.html
-      # Generate the URL for the report
-      report_url=$(az storage blob url --account-name yourstorageaccount --container-name reports --name test_report.html --output tsv)
-      echo "##vso[task.setvariable variable=REPORT_URL]$report_url"
-  displayName: 'Upload HTML Report to Azure Storage and Get URL'
-
-# Publish Report URL
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/report_url.txt'
-    ArtifactName: 'ReportURL'
-  displayName: 'Publish Report URL'
-
-# Create a file with the report URL
-- script: |
-    echo $(REPORT_URL) > $(Build.ArtifactStagingDirectory)/report_url.txt
-  displayName: 'Create Report URL File'
