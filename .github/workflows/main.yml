@@ -36,6 +36,10 @@ jobs:
           wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | sudo tar -xz -C /opt/
           sudo ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure  # Make Allure available in the PATH
 
+      - name: Verify Allure Installation
+        run: |
+          allure --version  # This will check if Allure is installed and accessible
+
       - name: Clean previous Allure results and reports
         run: |
           rm -rf allure-results/*
@@ -47,22 +51,20 @@ jobs:
         run: |
           source venv/bin/activate  # Ensure the virtual environment is activated
           pytest tests/test_table.py --alluredir=allure-results  # Run pytest and output Allure results
+          ls -al allure-results  # Check if allure-results directory has content
 
       - name: Generate Allure HTML Report
         run: |
           allure generate allure-results --clean -o allure-report  # Generate the Allure HTML report
-
-      - name: Archive previous Allure reports with timestamp (optional)
-        if: always()
-        run: |
-          timestamp=$(date +"%Y%m%d_%H%M%S")
-          mv allure-report "allure-report-$timestamp"
+          ls -al allure-report  # Check if allure-report directory has content
 
       - name: Upload Allure HTML Report
-        uses: actions/upload-artifact@v4  # Updated to v4
+        if: success() && steps.Generate_Allure_HTML_Report.outputs.success == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: AllureReport
           path: allure-report
+          if-no-files-found: warn
 
       - name: Serve Allure Report (Optional for Local Debugging)
         if: always()

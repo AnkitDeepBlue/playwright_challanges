@@ -3,6 +3,7 @@ from functools import cached_property
 from playwright.sync_api import Page, TimeoutError
 from utils.logger import setup_logger
 
+
 class JanSunwai:
     def __init__(self, page: Page):
         self.page = page
