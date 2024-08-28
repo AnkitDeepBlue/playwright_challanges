@@ -3,6 +3,7 @@ import allure
 import os
 
 
+@pytest.mark.download_test
 @allure.feature('Table Data Download')
 @allure.story('Download table data as CSV')
 @allure.description("Download the csv file")
