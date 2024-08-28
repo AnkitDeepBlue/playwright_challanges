@@ -1,3 +1,0 @@
-[32mINFO    [0m TablePage:table_page.py:24 Loading the page
-[32mINFO    [0m TablePage:table_page.py:38 Searching for name: S. Frost
-[32mINFO    [0m TablePage:table_page.py:43 Checking if search results contain text: S. Frost

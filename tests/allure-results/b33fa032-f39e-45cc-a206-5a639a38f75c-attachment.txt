@@ -1,2 +1,0 @@
-2024-06-24 01:00:49,922 - TablePage - INFO - Loading the page
-2024-06-24 01:00:50,109 - TablePage - INFO - Sorting by column: Name with order: sorting_desc
