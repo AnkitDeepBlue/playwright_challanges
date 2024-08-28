@@ -3,10 +3,6 @@ name: Run Pytest with Playwright and Allure Reporting in Docker and Deploy to Ne
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to run tests on'
-        required: false
-        default: 'master'
       marker:
         description: 'Pytest marker to run specific tests'
         required: false
@@ -21,8 +17,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
 
       - name: Clean previous Allure results and reports
         run: |
