@@ -35,7 +35,7 @@ RUN npm install -g npm@latest && \
     npx playwright install
 
 # Copy the current directory contents into the container at /app
-COPY . /app
+COPY .. /app
 
 # Create a virtual environment
 RUN python3 -m venv venv
