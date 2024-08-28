@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Clean previous Allure results and reports
+        run: |
+          rm -rf allure-results/*
+          rm -rf allure-report/*
+
       - name: Install Java, Node.js, and Allure Commandline
         run: |
           apt-get update && apt-get install -y openjdk-11-jre-headless curl
