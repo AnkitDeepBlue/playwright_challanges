@@ -23,8 +23,10 @@ jobs:
 
       - name: Install Allure Commandline
         run: |
-          wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | tar -xz -C /opt/
+          curl -o allure.tgz -L https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
+          tar -xz -C /opt/ -f allure.tgz
           ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
+          rm allure.tgz
 
       - name: Run Playwright Install
         run: playwright install --with-deps
