@@ -1,4 +1,4 @@
-name: Run Pytest with Allure Reporting and Deploy to GitHub Pages
+name: Run Pytest with Allure Reporting and Deploy to Netlify
 
 on:
   push:
@@ -58,15 +58,12 @@ jobs:
           allure generate allure-results --clean -o allure-report
           ls -al allure-report
 
-      - name: Deploy to GitHub Pages
-        if: success()
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Deploy to Netlify
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          touch allure-report/.nojekyll  # Ensure GitHub Pages doesn't treat the report as Jekyll
-          git clone --branch gh-pages https://github.com/${{ github.repository }} gh-pages
-          rsync -av --delete allure-report/ gh-pages/
-          cd gh-pages
-          git add .
-          git commit -m "Deploy Allure report"
-          git push origin gh-pages
+          netlify deploy --prod --dir=allure-report --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
