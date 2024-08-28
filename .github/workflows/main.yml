@@ -29,6 +29,13 @@ jobs:
           source venv/bin/activate  # Activate the virtual environment
           playwright install  # Install the Playwright browsers
 
+      - name: Install Allure Commandline
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jre-headless  # Install Java (required for Allure)
+          wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | sudo tar -xz -C /opt/
+          sudo ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure  # Make Allure available in the PATH
+
       - name: Clean previous Allure results and reports
         run: |
           rm -rf allure-results/*
