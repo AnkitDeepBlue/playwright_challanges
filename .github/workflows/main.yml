@@ -1,6 +1,6 @@
 # .github/workflows/ci.yml
 
-name: Run Pytest
+name: Run Pytest with Playwright
 
 on:
   push:
@@ -27,6 +27,11 @@ jobs:
           pip install --upgrade pip  # Upgrade pip
           pip install pytest junit-xml pytest-html  # Install pytest and necessary plugins
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi  # Install additional dependencies from requirements.txt if it exists
+
+      - name: Install Playwright Browsers
+        run: |
+          source venv/bin/activate  # Activate the virtual environment
+          playwright install  # Install the Playwright browsers
 
       - name: Run tests with pytest
         env:
