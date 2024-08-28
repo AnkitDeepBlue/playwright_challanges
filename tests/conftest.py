@@ -10,6 +10,7 @@ import ssl
 # Ensure SSL certificate verification using certifi's CA bundle
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
+
 @pytest.fixture(scope="session")
 def browser_context():
     with sync_playwright() as p:
@@ -18,6 +19,7 @@ def browser_context():
         yield context
         context.close()
         browser.close()
+
 
 @pytest.fixture
 def page(browser_context):
