@@ -21,6 +21,11 @@ jobs:
           pip install pytest allure-pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+      - name: Install Allure Commandline
+        run: |
+          wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | tar -xz -C /opt/
+          ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
+
       - name: Run Playwright Install
         run: playwright install --with-deps
 
