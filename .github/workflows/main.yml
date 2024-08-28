@@ -15,9 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Java and Allure Commandline
+      - name: Install Java, Node.js, and Allure Commandline
         run: |
           apt-get update && apt-get install -y openjdk-11-jre-headless curl
+          curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+          apt-get install -y nodejs
           curl -o allure.tgz -L https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
           tar -xz -C /opt/ -f allure.tgz
           ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
