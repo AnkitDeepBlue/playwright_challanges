@@ -1,6 +1,6 @@
 # .github/workflows/ci.yml
 
-name: Run Pytest with Playwright
+name: Run Pytest with Allure Reporting
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
           python -m venv venv  # Create a virtual environment
           source venv/bin/activate  # Activate the virtual environment
           pip install --upgrade pip  # Upgrade pip
-          pip install pytest junit-xml pytest-html  # Install pytest and necessary plugins
+          pip install pytest allure-pytest  # Install pytest and allure-pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi  # Install additional dependencies from requirements.txt if it exists
 
       - name: Install Playwright Browsers
@@ -33,22 +33,16 @@ jobs:
           source venv/bin/activate  # Activate the virtual environment
           playwright install  # Install the Playwright browsers
 
-      - name: Run tests with pytest
+      - name: Run tests with pytest and generate Allure results
         env:
           PYTHONPATH: ${{ github.workspace }}  # Add the repository root to PYTHONPATH
         run: |
           source venv/bin/activate  # Ensure the virtual environment is activated
-          mkdir -p artifacts  # Create the artifacts directory
-          pytest tests/test_table.py --junitxml=artifacts/junit-results.xml --html=artifacts/test_report.html --self-contained-html  # Run pytest
+          mkdir -p allure-results  # Create the directory for Allure results
+          pytest tests/test_table.py --alluredir=allure-results  # Run pytest and output Allure results
 
-      - name: Upload JUnit Test Report
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v3
         with:
-          name: JUnitReport
-          path: artifacts/junit-results.xml
-
-      - name: Upload HTML Test Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: HTMLReport
-          path: artifacts/test_report.html
+          name: AllureResults
+          path: allure-results
