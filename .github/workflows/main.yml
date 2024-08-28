@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/python:v1.17.2-focal
+      image: mcr.microsoft.com/playwright/python:latest
 
     steps:
       - name: Checkout repository
