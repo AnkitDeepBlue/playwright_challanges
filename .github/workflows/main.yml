@@ -22,16 +22,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest junit-xml pytest-html
+          python -m venv venv  # Create a virtual environment
+          source venv/bin/activate  # Activate the virtual environment
+          pip install --upgrade pip  # Upgrade pip
+          pip install pytest junit-xml pytest-html  # Install pytest and necessary plugins
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi  # Install additional dependencies from requirements.txt if it exists
 
       - name: Run tests with pytest
         run: |
-          mkdir -p artifacts
-          pytest tests/test_table.py --junitxml=artifacts/junit-results.xml --html=artifacts/test_report.html --self-contained-html
+          source venv/bin/activate  # Ensure the virtual environment is activated
+          mkdir -p artifacts  # Create the artifacts directory
+          pytest tests/test_table.py --junitxml=artifacts/junit-results.xml --html=artifacts/test_report.html --self-contained-html  # Run pytest
 
       - name: Upload JUnit Test Report
         uses: actions/upload-artifact@v3
