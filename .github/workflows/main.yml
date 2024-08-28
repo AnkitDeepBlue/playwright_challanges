@@ -1,9 +1,16 @@
 name: Run Pytest with Playwright and Allure Reporting in Docker and Deploy to Netlify
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests on'
+        required: false
+        default: 'master'
+      marker:
+        description: 'Pytest marker to run specific tests'
+        required: false
+        default: 'smoke'
 
 jobs:
   test:
@@ -14,6 +21,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Clean previous Allure results and reports
         run: |
@@ -43,7 +52,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest tests/test_table.py --alluredir=allure-results
+          pytest -m ${{ github.event.inputs.marker }} --alluredir=allure-results
           allure generate allure-results --clean -o allure-report
           ls -al allure-report
 

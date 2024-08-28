@@ -2,6 +2,7 @@ import pytest
 import allure
 
 
+@pytest.mark('table_test')
 @allure.feature('Table Sorting')
 @allure.description("This is to sort table by columns and assert the sorting")
 @pytest.mark.parametrize("column_name, order", [("Name", "sorting_desc"), ("Age", "sorting_desc")])
@@ -11,6 +12,7 @@ def test_sorting_table_by_column(table_page, column_name, order):
     assert {column_name:order} == final_sorting_details
 
 
+@pytest.mark('table_test')
 @allure.feature('Table Search')
 @allure.description("This is to search the names in table and validate it appears in row")
 @pytest.mark.parametrize("name", ["S. Frost", "H. Martin"])
