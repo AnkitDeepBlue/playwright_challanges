@@ -13,12 +13,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Updated to v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+        uses: actions/setup-python@v4  # v4 is still current
 
       - name: Install dependencies
         run: |
@@ -54,15 +52,7 @@ jobs:
           allure generate allure-results --clean -o allure-report  # Generate the Allure HTML report
 
       - name: Upload Allure HTML Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Updated to v4
         with:
           name: AllureReport
           path: allure-report
-
-      - name: Serve Allure Report
-        if: always()
-        run: |
-          sudo apt-get install -y nginx
-          sudo cp -r allure-report/* /var/www/html/
-          sudo service nginx start
-          echo "Allure report is being served on http://localhost"
