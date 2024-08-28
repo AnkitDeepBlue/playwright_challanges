@@ -27,13 +27,16 @@ def page(browser_context):
     yield page
     page.close()
 
+
 @pytest.fixture
 def table_page(page):
     yield TablePage(page)
 
+
 @pytest.fixture
 def download_page(page):
     yield DownloadPage(page)
+
 
 @pytest.fixture
 def JanSunwai_page(page):
