@@ -1,7 +1,7 @@
 
 # Playwright Challenges 🚀
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/AnkitDeepBlue/playwright_challenges/ci.yml?branch=master)
+![GitHub Workflow Status](https://github.com/AnkitDeepBlue/playwright_challanges)
 
 ## Overview
 
@@ -23,7 +23,7 @@ To get started with the project locally, follow these steps:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/playwright_challenges.git
+   git clone https://github.com/AnkitDeepBlue/playwright_challenges.git
    ```
 
 2. **Navigate to the project directory:**
