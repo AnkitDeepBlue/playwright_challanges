@@ -29,6 +29,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi  # Install additional dependencies from requirements.txt if it exists
 
       - name: Run tests with pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}  # Add the repository root to PYTHONPATH
         run: |
           source venv/bin/activate  # Ensure the virtual environment is activated
           mkdir -p artifacts  # Create the artifacts directory
