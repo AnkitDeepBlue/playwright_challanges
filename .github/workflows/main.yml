@@ -15,18 +15,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Java and Allure Commandline
+        run: |
+          apt-get update && apt-get install -y openjdk-11-jre-headless curl
+          curl -o allure.tgz -L https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
+          tar -xz -C /opt/ -f allure.tgz
+          ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
+          rm allure.tgz
+
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
           pip install pytest allure-pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Install Allure Commandline
-        run: |
-          curl -o allure.tgz -L https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
-          tar -xz -C /opt/ -f allure.tgz
-          ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
-          rm allure.tgz
 
       - name: Run Playwright Install
         run: playwright install --with-deps
@@ -36,10 +37,6 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest tests/test_table.py --alluredir=allure-results
-          ls -al allure-results
-
-      - name: Generate Allure HTML Report
-        run: |
           allure generate allure-results --clean -o allure-report
           ls -al allure-report
 
