@@ -33,6 +33,14 @@ jobs:
           source venv/bin/activate  # Activate the virtual environment
           playwright install  # Install the Playwright browsers
 
+      - name: Install Allure commandline
+        run: |
+          # Install Allure using the official installer
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jre-headless
+          wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | sudo tar -xz -C /opt/
+          sudo ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
+
       - name: Run tests with pytest and generate Allure results
         env:
           PYTHONPATH: ${{ github.workspace }}  # Add the repository root to PYTHONPATH
@@ -41,8 +49,20 @@ jobs:
           mkdir -p allure-results  # Create the directory for Allure results
           pytest tests/test_table.py --alluredir=allure-results  # Run pytest and output Allure results
 
-      - name: Upload Allure Results
+      - name: Generate Allure HTML Report
+        run: |
+          allure generate allure-results --clean -o allure-report  # Generate the Allure HTML report
+
+      - name: Upload Allure HTML Report
         uses: actions/upload-artifact@v3
         with:
-          name: AllureResults
-          path: allure-results
+          name: AllureReport
+          path: allure-report
+
+      - name: Serve Allure Report
+        if: always()
+        run: |
+          sudo apt-get install -y nginx
+          sudo cp -r allure-report/* /var/www/html/
+          sudo service nginx start
+          echo "Allure report is being served on http://localhost"
