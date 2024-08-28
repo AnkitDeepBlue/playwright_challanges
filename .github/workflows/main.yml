@@ -1,4 +1,4 @@
-name: Run Pytest with Allure Reporting and Deploy to Netlify
+name: Run Pytest with Playwright and Allure Reporting in Docker and Deploy to Netlify
 
 on:
   push:
@@ -8,48 +8,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.17.2-focal
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
           pip install --upgrade pip
           pip install pytest allure-pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Install Playwright Browsers
-        run: |
-          source venv/bin/activate
-          playwright install
-
-      - name: Install Allure Commandline
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-11-jre-headless
-          wget -qO- https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz | sudo tar -xz -C /opt/
-          sudo ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
-
-      - name: Verify Allure Installation
-        run: |
-          allure --version
-
-      - name: Clean previous Allure results and reports
-        run: |
-          rm -rf allure-results/*
-          rm -rf allure-report/*
+      - name: Run Playwright Install
+        run: playwright install --with-deps
 
       - name: Run tests with pytest and generate Allure results
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          source venv/bin/activate
           pytest tests/test_table.py --alluredir=allure-results
           ls -al allure-results
 
