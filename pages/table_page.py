@@ -1,51 +1,48 @@
-import time
-
 from playwright.sync_api import Page
 from functools import cached_property
-from utils.helpers import MainPage
-from utils.sorting_proxy import SortingProxy
+
+from locaters.locater_service import LocatorService
+from utils.helpers import HelperBot
+from proxy.sorting_proxy import SortingProxy
 from utils.logger import setup_logger
 
+
 class TablePage:
-    def __init__(self, page: Page):
+    def __init__(self, page: Page, locator_service: LocatorService):
         self.page = page
-        self.main_page = MainPage(page)
+        self.locators = locator_service.lambda_table
+        self.bot = HelperBot(page)
         self.sorting_proxy = SortingProxy(page)
         self.logger = setup_logger(self.__class__.__name__)
 
-    @cached_property
-    def locators(self):
-        return {
-            "url": "https://www.lambdatest.com/selenium-playground/table-sort-search-demo",
-            "name_column_header": "th:has-text('{column_name}')",
-            "table_rows": "table tbody tr",
-            "search_input": "input[type='search']"
-        }
-
     def load(self):
+        """Load the page by navigating to the URL."""
         self.logger.info("Loading the page")
-        self.page.goto(self.locators["url"])
+        self.page.goto(self.locators.url)
 
-    def sort_by_column(self, column_name: str, order):
+    def sort_by_column(self, column_name: str, order: str):
+        """Sort the table by the specified column and order."""
         self.logger.info(f"Sorting by column: {column_name} with order: {order}")
-        ele = self.main_page.get_elements(self.locators["name_column_header"].format(column_name=column_name))
-        return self.sorting_proxy.do_sorting(ele[0], order)
+        ele = self.bot.process_selector(self.locators.name_column_header.format(column_name=column_name))
+        return self.sorting_proxy.do_sorting(ele, order)
 
     @cached_property
     def table_contents(self):
+        """Get the contents of the table."""
         self.logger.info("Getting table contents")
-        return self.main_page.get_elements(self.locators["table_rows"])
+        return self.bot.get_elements(self.locators.table_rows)
 
-    def search(self, name):
+    def search(self, name: str):
+        """Search for the specified name in the table."""
         self.logger.info(f"Searching for name: {name}")
-        self.page.fill(self.locators["search_input"], name)
-        self.page.press(self.locators["search_input"], "Enter")
+        self.page.fill(self.locators.search_input, name)
+        self.page.press(self.locators.search_input, "Enter")
 
     def search_contains_text(self, text: str):
+        """Check if the search results contain the specified text."""
         self.logger.info(f"Checking if search results contain text: {text}")
-        row_locator = f"table tbody tr:has-text('{text}')"
-        rows = self.main_page.get_elements(row_locator)
+        rows = self.bot.get_elements(self.locators.row_locator.format(text=text))
         if any(text in row.inner_text() for row in rows):
-            MainPage.take_screenshot(self.page, "search_contains_text")
+            self.bot.take_screenshot(self.page, "search_contains_text")
             return True
         return False

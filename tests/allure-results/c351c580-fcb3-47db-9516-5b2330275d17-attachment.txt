@@ -1,3 +1,0 @@
-2024-06-24 01:00:51,338 - TablePage - INFO - Loading the page
-2024-06-24 01:00:51,456 - TablePage - INFO - Searching for name: H. Martin
-2024-06-24 01:00:51,480 - TablePage - INFO - Checking if search results contain text: H. Martin

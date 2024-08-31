@@ -1,4 +1,0 @@
-[32mINFO    [0m DownloadPage:download_page.py:13 Loading the download page
-[32mINFO    [0m DownloadPage:download_page.py:17 Clicking on the 'CSV' button to download the table data as CSV
-[32mINFO    [0m DownloadPage:download_page.py:23 CSV downloaded to /Users/ankittripathi/PycharmProjects/playwright-ch/tests/downloads/Selenium Grid Online  Run Selenium Test On Cloud.csv
-[32mINFO    [0m DownloadPage:download_page.py:27 Verifying if the CSV file is downloaded to /Users/ankittripathi/PycharmProjects/playwright-ch/tests/downloads/Selenium Grid Online  Run Selenium Test On Cloud.csv
