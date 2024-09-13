@@ -12,6 +12,6 @@ def test_slider(slider_page, slide_to):
 
     with allure.step("Moving slider"):
         slider_output = slider_page.move_slider_to_value(slide_to)
-        assert slider_output == slide_to
+        assert slider_output == slide_to, 'unable to perform slide'
 
 
