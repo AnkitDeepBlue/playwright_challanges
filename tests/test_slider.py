@@ -11,6 +11,7 @@ def test_slider(slider_page, slide_to):
         slider_page.load()
 
     with allure.step("Moving slider"):
-        slider_page.move_slider_to_value(slide_to)
+        slider_output = slider_page.move_slider_to_value(slide_to)
+        assert slider_output == slide_to
 
 
