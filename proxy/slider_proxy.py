@@ -19,7 +19,7 @@ class SliderProxy:
 
         slider_width = slider_bounding_box['width']
 
-        for i in range(-slider_width // 2, slider_width * 2, 5):
+        for i in range(-slider_width // 2, slider_width * 2, 4):
             x_offset = slider_bounding_box['x'] + i
             self.page.mouse.move(x_offset, slider_bounding_box['y'] + slider_bounding_box['height'] / 2)
             self.page.mouse.down()
