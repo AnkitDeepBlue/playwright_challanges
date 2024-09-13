@@ -18,7 +18,7 @@ def test_sorting_table_by_column(table_page, column_name, order):
             f"Expected sorting: {{'{column_name}': '{order}'}}, but got: {final_sorting_details}"
 
     with allure.step("Attaching screenshot of the sorted table"):
-        table_page.bot.take_screenshot(table_page.page, f"sorted_by_{column_name}")
+        table_page.bot.take_screenshot(name=f"sorted_by_{column_name}")
 
 
 @pytest.mark.table_test
@@ -37,4 +37,4 @@ def test_table_search(table_page, name):
         assert found_text, f"Text '{name}' is not found in search results."
 
     with allure.step("Attaching screenshot of the search results"):
-        table_page.bot.take_screenshot(table_page.page, f"search_result_for_{name}")
+        table_page.bot.take_screenshot(name=f"search_result_for_{name}")

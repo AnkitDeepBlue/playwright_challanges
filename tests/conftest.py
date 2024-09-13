@@ -5,12 +5,13 @@ from locaters.locater_service import LocatorService
 from pages.jansunwai import JanSunwai
 from pages.download_page import DownloadPage
 from pages.table_page import TablePage
+from pages.upload_page import UploadPage
 
 
 @pytest.fixture(scope="session")
 def browser_context():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context(ignore_https_errors=True)
         yield context
         context.close()
@@ -43,3 +44,10 @@ def download_page(page, locator_service: LocatorService):
 @pytest.fixture
 def JanSunwai_page(page):
     yield JanSunwai(page)
+
+
+@pytest.fixture
+def upload_page(page, locator_service: LocatorService):
+    """Provide the DownloadPage instance."""
+    yield UploadPage(page, locator_service)
+

@@ -10,7 +10,6 @@ def test_download_table_as_csv(download_page):
     with allure.step("Loading the download page"):
         download_page.load()
 
-    # Get the download directory using HelperBot
     download_dir = download_page.bot.get_download_directory()
 
     with allure.step("Downloading the table data as CSV"):

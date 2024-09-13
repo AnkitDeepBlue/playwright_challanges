@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import allure
 from playwright.sync_api import Page, Locator
 from exceptions.custom_exceptions import LocatorNotFoundException
@@ -7,6 +9,7 @@ from exceptions.custom_exceptions import LocatorNotFoundException
 class HelperBot:
     def __init__(self, page: Page):
         self.page = page
+        self.upload_dir = self.get_or_create_directory('uploads')
 
     def get_elements(self, selector):
         return self.page.query_selector_all(selector)
@@ -15,11 +18,12 @@ class HelperBot:
     def get_attribute(element: Locator, attribute):
         return element.get_attribute(attribute)
 
-    @staticmethod
-    def take_screenshot(page: Page, name: str):
+    def take_screenshot(self, name: str, attach_to_allure: bool = False):
         screenshot_path = f"screenshots/{name}.png"
-        page.screenshot(path=screenshot_path)
-        allure.attach.file(screenshot_path, name=name, attachment_type=allure.attachment_type.PNG)
+        self.page.screenshot(path=screenshot_path)
+
+        if attach_to_allure:
+            allure.attach.file(screenshot_path, name=name, attachment_type=allure.attachment_type.PNG)
 
     def process_selector(self, selector, timeout=5000, wait_state="visible"):
         try:
@@ -47,3 +51,26 @@ class HelperBot:
         """Return the default download directory path."""
         return self.get_download_path("downloads", "")
 
+    @staticmethod
+    def find_project_root() -> Path:
+        """Find the project root by searching for the 'requirements.txt' file."""
+        current_dir = Path(__file__).resolve().parent
+
+        while current_dir != current_dir.root:
+            if (current_dir/'requirements.txt').exists():
+                return current_dir
+            current_dir = current_dir.parent
+
+        raise FileNotFoundError("Project root with 'requirements.txt' not found.")
+
+    @staticmethod
+    def get_or_create_directory(dir_name: str) -> str:
+        """Create a directory relative to the project root if it doesn't exist and return the directory path."""
+        project_root = HelperBot.find_project_root()
+        dir_path = project_root/dir_name
+        dir_path.mkdir(parents=True, exist_ok=True)
+        return str(dir_path)
+
+
+    def get_upload_directory(self):
+        return self.upload_dir
