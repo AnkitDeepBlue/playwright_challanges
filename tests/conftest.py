@@ -4,6 +4,7 @@ from playwright.sync_api import sync_playwright
 from locaters.locater_service import LocatorService
 from pages.jansunwai import JanSunwai
 from pages.download_page import DownloadPage
+from pages.slider_page import SliderPage
 from pages.table_page import TablePage
 from pages.upload_page import UploadPage
 
@@ -50,4 +51,10 @@ def JanSunwai_page(page):
 def upload_page(page, locator_service: LocatorService):
     """Provide the DownloadPage instance."""
     yield UploadPage(page, locator_service)
+
+
+@pytest.fixture
+def slider_page(page, locator_service: LocatorService):
+    """Provide the DownloadPage instance."""
+    yield SliderPage(page, locator_service)
 
