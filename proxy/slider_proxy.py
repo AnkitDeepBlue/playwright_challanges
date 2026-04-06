@@ -31,3 +31,5 @@ class SliderProxy:
 
         raise SliderValueNotReachedException(f"Failed to move the slider to the target value: {target_value}. "
                                              f"Final value was: {current_value}")
+
+    #I want one more method in SliderProxy class which will return the current value of the slider

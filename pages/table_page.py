@@ -23,8 +23,8 @@ class TablePage:
     def sort_by_column(self, column_name: str, order: str):
         """Sort the table by the specified column and order."""
         self.logger.info(f"Sorting by column: {column_name} with order: {order}")
-        ele = self.bot.process_selector(self.locators.name_column_header.format(column_name=column_name))
-        return self.sorting_proxy.do_sorting(ele, order)
+        selector = self.locators.name_column_header.format(column_name=column_name)
+        return self.sorting_proxy.do_sorting(selector, order)
 
     @cached_property
     def table_contents(self):
