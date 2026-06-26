@@ -17,13 +17,16 @@ class SliderPage:
         """Load the page by navigating to the URL."""
         self.logger.info("Loading the page")
         self.page.goto(self.locators.url)
+        self.page.wait_for_load_state("networkidle")
 
     def move_slider_to_value(self, target_value: int):
         """Move the slider to the specified target value by comparing the slider output."""
         self.logger.info(f"Moving the slider to the value: {target_value}")
 
-        slider = self.bot.process_selector(self.locators.slider_bar)
-        slider_output = self.bot.process_selector(self.locators.slider_output)
+        slider = self.page.locator(self.locators.slider_bar)
+        slider_output = self.page.locator(self.locators.slider_output)
+        slider.wait_for(state="visible")
+        slider_output.wait_for(state="visible")
 
         final_value = self.slider_proxy.move_slider_to_value(slider, slider_output, target_value)
 
